@@ -48,6 +48,9 @@ export default class Preloader extends Phaser.Scene {
       loadingText.destroy();
       percentText.destroy();
       assetText.destroy();
+
+      // Al completarse la carga de recursos, iniciar automáticamente MenuScene
+      this.scene.start('MenuScene');
     });
 
     this.load.on('loaderror', (file) => {
@@ -80,7 +83,7 @@ export default class Preloader extends Phaser.Scene {
     }
 
     // Pasar a la escena principal (ajusta según tu flujo)
-    // this.scene.start('MainMenu');
+    // this.scene.start('MenuScene');
     console.log('Preloader completado. Juego listo.');
   }
 }

@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import Boot from './scenes/Boot.js';
 import Preloader from './scenes/Preloader.js';
+import MenuScene from './scenes/MenuScene.js';
+import GameScene from './scenes/GameScene.js';
+import PauseScene from './scenes/PauseScene.js';
+import GameOverScene from './scenes/GameOverScene.js';
 
 /**
  * Configuración inicial del juego.
@@ -34,7 +38,7 @@ const config = {
     pixelArt: false,
     roundPixels: true
   },
-  scene: [Boot, Preloader]
+  scene: [Boot, Preloader, MenuScene, GameScene, PauseScene, GameOverScene]
 };
 
 const game = new Phaser.Game(config);
