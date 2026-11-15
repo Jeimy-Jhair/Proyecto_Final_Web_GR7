@@ -221,7 +221,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.body) {
       // Garantiza que la gravedad global de main.js no altere la velocidad controlada
       this.body.setAllowGravity(false);
-      this.body.setSize(preset.width, preset.height, true);
+      const bodyW = Math.round(this.width * 1.25);
+      const bodyH = Math.round(this.height * 1.25);
+      this.body.setSize(bodyW, bodyH, false);
+      this.body.setOffset(this.width * (1 - 1.25) / 2, this.height * (1 - 1.25) / 2);
     }
 
     this.move(0);
