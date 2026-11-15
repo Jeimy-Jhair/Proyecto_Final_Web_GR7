@@ -1,4 +1,5 @@
 import AudioManager from '../managers/AudioManager.js';
+import StorageManager from '../managers/StorageManager.js';
 
 export default class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -46,7 +47,14 @@ export default class GameOverScene extends Phaser.Scene {
       color: '#cbd5e1'
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height / 2 + 70, 'Haz clic o presiona R para jugar de nuevo', {
+    const highScore = StorageManager.getHighScore();
+    this.add.text(width / 2, height / 2 + 50, `Récord: ${highScore}`, {
+      fontFamily: 'Arial',
+      fontSize: 20,
+      color: '#fbbf24'
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, height / 2 + 90, 'Haz clic o presiona R para jugar de nuevo', {
       fontFamily: 'Arial',
       fontSize: 18,
       color: '#94a3b8'

@@ -1,4 +1,5 @@
 import AudioManager from '../managers/AudioManager.js';
+import StorageManager from '../managers/StorageManager.js';
 
 export default class MenuScene extends Phaser.Scene {
   constructor() {
@@ -35,6 +36,14 @@ export default class MenuScene extends Phaser.Scene {
       fontFamily: 'Arial',
       fontSize: 24,
       color: '#ffffff'
+    }).setOrigin(0.5);
+
+    const highScore = StorageManager.getHighScore();
+    const levelReached = StorageManager.getLevel();
+    this.add.text(width / 2, height / 2 + 40, `Récord: ${highScore}   Nivel alcanzado: ${levelReached}`, {
+      fontFamily: 'Arial',
+      fontSize: 18,
+      color: '#cbd5e1'
     }).setOrigin(0.5);
 
     // --- Lógica de transición de estados (NO BORRAR) ---

@@ -98,7 +98,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.levelSystem = new LevelSystem({
-      initialLevel: 1,
+      initialLevel: StorageManager.getLevel(),
       onLevelUp: ({ level }) => {
         StorageManager.setLevel(level);
         if (this.levelText) this.levelText.setText(`Nivel: ${level}`);
