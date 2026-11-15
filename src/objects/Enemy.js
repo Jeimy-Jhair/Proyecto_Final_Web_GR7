@@ -217,10 +217,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this._zigzagSign = options.zigzagDirection === -1 ? -1 : 1;
 
     this.enableBody(true, x, y, true, true);
+    this.setDisplaySize(preset.width, preset.height);
     if (this.body) {
       // Garantiza que la gravedad global de main.js no altere la velocidad controlada
       this.body.setAllowGravity(false);
-      this.body.setSize(this.width, this.height, true);
+      this.body.setSize(preset.width, preset.height, true);
     }
 
     this.move(0);

@@ -24,7 +24,36 @@ export default class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => this.registry.get('audioManager')?.stopMusic());
 
     // Fondo simple
-    this.add.rectangle(0, 0, width, height, 0x0f172a).setOrigin(0);
+    this.add.rectangle(0, 0, width, height, 0x3b2f3e).setOrigin(0).setDepth(-20);
+
+    // Meteoritos decorativos de fondo (sin solaparse)
+    const meteorKeys = this.registry.get('meteorKeys') || [];
+    if (meteorKeys.length > 0) {
+      const placed = [];
+      let attempts = 0;
+      while (placed.length < 12 && attempts < 300) {
+        attempts += 1;
+        const key = meteorKeys[Math.floor(Math.random() * meteorKeys.length)];
+        const scale = Phaser.Math.FloatBetween(0.35, 0.85);
+        const texture = this.textures.get(key);
+        const source = texture?.source?.[0];
+        const w = (source?.width || 40) * scale;
+        const h = (source?.height || 40) * scale;
+        const x = Phaser.Math.Between(30, width - 30);
+        const y = Phaser.Math.Between(30, height - 30);
+        const overlaps = placed.some((p) =>
+          Math.abs(p.x - x) < (p.w + w) * 0.45 &&
+          Math.abs(p.y - y) < (p.h + h) * 0.45
+        );
+        if (overlaps) continue;
+        this.add.image(x, y, key)
+          .setScale(scale)
+          .setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2))
+          .setAlpha(0.55)
+          .setDepth(-10);
+        placed.push({ x, y, w, h });
+      }
+    }
 
     // 1. Grupos de física
     this.playerBullets = this.physics.add.group({

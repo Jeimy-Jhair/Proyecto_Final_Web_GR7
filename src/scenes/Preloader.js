@@ -5,7 +5,15 @@ import sfxDisparoUrl from '../assets/audio/efecto-disparo.wav?url';
 import sfxExplosionUrl from '../assets/audio/efecto-explosion.wav?url';
 import sfxEnemigoDisparoUrl from '../assets/audio/efecto-enemigo-disparo.wav?url';
 import sfxGolpeUrl from '../assets/audio/efecto-golpe.wav?url';
-import imagenMuteUrl from '../assets/images/imagen-mute.png?url';
+import imagenMuteUrl from '../assets/images/mute/imagen-mute.png?url';
+import playerUrl from '../assets/images/player/player.png?url';
+import laserPlayerUrl from '../assets/images/player/laser-player.png?url';
+import enemyOneUrl from '../assets/images/Enemies/enemy-one.png?url';
+import enemyTwoUrl from '../assets/images/Enemies/enemy-two.png?url';
+import enemyThreeUrl from '../assets/images/Enemies/enemy-three.png?url';
+import laserEnemyUrl from '../assets/images/Enemies/laser-enemy.png?url';
+
+const meteorModules = import.meta.glob('../assets/images/Meteors/*.png', { eager: true });
 
 export default class Preloader extends Phaser.Scene {
   constructor() {
@@ -72,6 +80,23 @@ export default class Preloader extends Phaser.Scene {
     this.load.audio('sfx_enemigo_disparo', sfxEnemigoDisparoUrl);
     this.load.audio('sfx_golpe', sfxGolpeUrl);
     this.load.image('imagen-mute', imagenMuteUrl);
+
+    // --- Imágenes del juego ---
+    this.load.image('player', playerUrl);
+    this.load.image('bullet_player', laserPlayerUrl);
+    this.load.image('enemy_basic', enemyOneUrl);
+    this.load.image('enemy_fast', enemyTwoUrl);
+    this.load.image('enemy_tank', enemyThreeUrl);
+    this.load.image('bullet_enemy', laserEnemyUrl);
+
+    // --- Meteoritos de fondo (decoración) ---
+    Object.entries(meteorModules).forEach(([path, module]) => {
+      const fileName = path.split('/').pop().replace('.png', '');
+      this.load.image(`meteor_${fileName}`, module.default);
+    });
+
+    // Guardar claves de meteoritos para GameScene
+    this.registry.set('meteorKeys', Object.keys(meteorModules).map((p) => `meteor_${p.split('/').pop().replace('.png', '')}`));
   }
 
   create() {

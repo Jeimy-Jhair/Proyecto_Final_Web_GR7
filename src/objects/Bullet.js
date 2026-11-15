@@ -113,12 +113,13 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
       this.setTexture(resolvedKey);
     }
 
+    this.setDisplaySize(8, 18);
     this.enableBody(true, x, y, true, true);
 
     if (this.body) {
       // Garantiza vuelo recto aunque la escena tenga gravedad global (main.js: gravity.y = 300)
       this.body.setAllowGravity(false);
-      this.body.setSize(this.width, this.height, true);
+      this.body.setSize(8, 18, true);
     }
 
     const defaultDir = this.owner === 'enemy' ? { x: 0, y: 1 } : { x: 0, y: -1 };

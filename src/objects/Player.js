@@ -87,6 +87,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (this.body) {
       this.body.setAllowGravity(false);
+      this.setDisplaySize(40, 40);
+      this.body.setSize(40, 40, true);
+    } else {
+      this.setDisplaySize(40, 40);
     }
 
     this._clampToBounds();
