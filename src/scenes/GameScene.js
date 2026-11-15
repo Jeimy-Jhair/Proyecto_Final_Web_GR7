@@ -27,6 +27,7 @@ export default class GameScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x3b2f3e).setOrigin(0).setDepth(-20);
 
     // Meteoritos decorativos de fondo (sin solaparse)
+    this.meteors = [];
     const meteorKeys = this.registry.get('meteorKeys') || [];
     if (meteorKeys.length > 0) {
       const placed = [];
@@ -46,14 +47,25 @@ export default class GameScene extends Phaser.Scene {
           Math.abs(p.y - y) < (p.h + h) * 0.45
         );
         if (overlaps) continue;
-        this.add.image(x, y, key)
+        const meteor = this.add.image(x, y, key)
           .setScale(scale)
           .setRotation(Phaser.Math.FloatBetween(0, Math.PI * 2))
           .setAlpha(0.55)
           .setDepth(-10);
+        this.meteors.push({
+          image: meteor,
+          speed: Phaser.Math.FloatBetween(30, 110)
+        });
         placed.push({ x, y, w, h });
       }
     }
+
+    // Contador de FPS (esquina inferior izquierda)
+    this.fpsText = this.add.text(16, height - 24, 'FPS: 60', {
+      fontFamily: 'Arial',
+      fontSize: 14,
+      color: '#94a3b8'
+    }).setDepth(100);
 
     // 1. Grupos de física
     this.playerBullets = this.physics.add.group({
@@ -183,7 +195,29 @@ export default class GameScene extends Phaser.Scene {
     this.waveSystem.startWave(1);
   }
 
-  update() {
+  update(time, delta) {
+    const safeDelta = Number.isFinite(delta) && delta > 0 ? delta : 16.67;
+    const dt = safeDelta / 1000;
+
+    // Meteoritos en movimiento (simulan avance de la nave)
+    if (!this.isGameOver && Array.isArray(this.meteors)) {
+      const { height } = this.scale;
+      this.meteors.forEach((meteor) => {
+        if (!meteor?.image?.active) return;
+        meteor.image.y += meteor.speed * dt;
+        if (meteor.image.y > height + 60) {
+          meteor.image.y = -60;
+          meteor.image.x = Phaser.Math.Between(30, this.scale.width - 30);
+          meteor.speed = Phaser.Math.FloatBetween(30, 110);
+        }
+      });
+    }
+
+    if (this.fpsText) {
+      const fps = this.game?.loop?.actualFps;
+      this.fpsText.setText(`FPS: ${Math.round(Number.isFinite(fps) ? fps : 1000 / safeDelta)}`);
+    }
+
     if (!this.isGameOver) {
       this.player?.update();
     }
