@@ -13,6 +13,17 @@ export default class AudioManager {
     this.muted = StorageManager.isMuted();
     this.musicVolume = 0.5;
     this.sfxVolume = 0.7;
+
+    // Mezcla base (balance interno) por efecto
+    this.sfxVolumes = {
+      sfx_disparo: 0.05,
+      sfx_explosion: 0.4,
+      sfx_enemigo_disparo: 0.5,
+      sfx_golpe: 0.7
+    };
+
+    // Volumen maestro de SFX (control del usuario)
+    this.masterSfxVolume = StorageManager.getSfxVolume();
   }
 
   /**
@@ -66,7 +77,9 @@ export default class AudioManager {
       console.warn(`AudioManager: SFX "${key}" no encontrado.`);
       return;
     }
-    const sfx = this.scene.sound.add(key, { volume: this.sfxVolume });
+    const baseVolume = this.sfxVolumes[key] ?? this.sfxVolume;
+    const finalVolume = Math.min(1, Math.max(0, baseVolume * this.masterSfxVolume));
+    const sfx = this.scene.sound.add(key, { volume: finalVolume });
     sfx.setMute(this.muted);
     sfx.play();
     sfx.on('complete', () => sfx.destroy());
@@ -97,6 +110,18 @@ export default class AudioManager {
 
   isMuted() {
     return this.muted;
+  }
+
+  setMasterSfxVolume(volume) {
+    const num = Number(volume);
+    if (!Number.isFinite(num)) return this.masterSfxVolume;
+    this.masterSfxVolume = Math.min(1, Math.max(0, num));
+    StorageManager.setSfxVolume(this.masterSfxVolume);
+    return this.masterSfxVolume;
+  }
+
+  getMasterSfxVolume() {
+    return this.masterSfxVolume;
   }
 
   /**

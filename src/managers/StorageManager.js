@@ -6,7 +6,8 @@
 const KEYS = {
   HIGH_SCORE: 'game_high_score',
   LEVEL: 'game_level_reached',
-  MUTED: 'game_audio_muted'
+  MUTED: 'game_audio_muted',
+  SFX_VOLUME: 'game_sfx_volume'
 };
 
 export default class StorageManager {
@@ -67,12 +68,29 @@ export default class StorageManager {
     this._safeSet(KEYS.MUTED, String(Boolean(muted)));
   }
 
+  // --- Volumen maestro de SFX ---
+  static getSfxVolume() {
+    const raw = this._safeGet(KEYS.SFX_VOLUME, '1');
+    const num = Number(raw);
+    if (!Number.isFinite(num)) return 1;
+    return Math.min(1, Math.max(0, num));
+  }
+
+  static setSfxVolume(volume) {
+    const num = Number(volume);
+    if (!Number.isFinite(num)) return false;
+    const clamped = Math.min(1, Math.max(0, num));
+    this._safeSet(KEYS.SFX_VOLUME, String(clamped));
+    return true;
+  }
+
   // --- Utilidades ---
   static reset() {
     try {
       localStorage.removeItem(KEYS.HIGH_SCORE);
       localStorage.removeItem(KEYS.LEVEL);
       localStorage.removeItem(KEYS.MUTED);
+      localStorage.removeItem(KEYS.SFX_VOLUME);
     } catch (e) {
       console.warn('StorageManager: no se pudo resetear', e);
     }
