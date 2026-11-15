@@ -1,4 +1,19 @@
 import AudioManager from '../managers/AudioManager.js';
+import musicaMenuUrl from '../assets/audio/musica-menú.ogg?url';
+import musicaGameplayUrl from '../assets/audio/musica-gameplay.wav?url';
+import sfxDisparoUrl from '../assets/audio/efecto-disparo.wav?url';
+import sfxExplosionUrl from '../assets/audio/efecto-explosion.wav?url';
+import sfxEnemigoDisparoUrl from '../assets/audio/efecto-enemigo-disparo.wav?url';
+import sfxGolpeUrl from '../assets/audio/efecto-golpe.wav?url';
+import imagenMuteUrl from '../assets/images/mute/imagen-mute.png?url';
+import playerUrl from '../assets/images/player/player.png?url';
+import laserPlayerUrl from '../assets/images/player/laser-player.png?url';
+import enemyOneUrl from '../assets/images/Enemies/enemy-one.png?url';
+import enemyTwoUrl from '../assets/images/Enemies/enemy-two.png?url';
+import enemyThreeUrl from '../assets/images/Enemies/enemy-three.png?url';
+import laserEnemyUrl from '../assets/images/Enemies/laser-enemy.png?url';
+
+const meteorModules = import.meta.glob('../assets/images/Meteors/*.png', { eager: true });
 
 export default class Preloader extends Phaser.Scene {
   constructor() {
@@ -57,21 +72,37 @@ export default class Preloader extends Phaser.Scene {
       console.warn('Preloader: no se pudo cargar', file.key, file.src);
     });
 
-    // --- Carga de recursos de audio ---
-    // Coloca tus archivos en src/assets/audio/ (y sírvelos vía public/ o importa con Vite)
-    this.load.audio('bgm', 'assets/audio/bgm.mp3');
-    this.load.audio('sfx_jump', 'assets/audio/sfx_jump.wav');
-    this.load.audio('sfx_coin', 'assets/audio/sfx_coin.wav');
+    // --- Carga de recursos de audio (importados con Vite) ---
+    this.load.audio('musica-menu', musicaMenuUrl);
+    this.load.audio('musica-gameplay', musicaGameplayUrl);
+    this.load.audio('sfx_disparo', sfxDisparoUrl);
+    this.load.audio('sfx_explosion', sfxExplosionUrl);
+    this.load.audio('sfx_enemigo_disparo', sfxEnemigoDisparoUrl);
+    this.load.audio('sfx_golpe', sfxGolpeUrl);
+    this.load.image('imagen-mute', imagenMuteUrl);
 
-    // --- Carga de recursos de imágenes ---
-    this.load.image('logo', 'assets/images/logo.png');
-    this.load.image('player', 'assets/images/player.png');
+    // --- Imágenes del juego ---
+    this.load.image('player', playerUrl);
+    this.load.image('bullet_player', laserPlayerUrl);
+    this.load.image('enemy_basic', enemyOneUrl);
+    this.load.image('enemy_fast', enemyTwoUrl);
+    this.load.image('enemy_tank', enemyThreeUrl);
+    this.load.image('bullet_enemy', laserEnemyUrl);
+
+    // --- Meteoritos de fondo (decoración) ---
+    Object.entries(meteorModules).forEach(([path, module]) => {
+      const fileName = path.split('/').pop().replace('.png', '');
+      this.load.image(`meteor_${fileName}`, module.default);
+    });
+
+    // Guardar claves de meteoritos para GameScene
+    this.registry.set('meteorKeys', Object.keys(meteorModules).map((p) => `meteor_${p.split('/').pop().replace('.png', '')}`));
   }
 
   create() {
     // Inicializar AudioManager y registrar SFX (al menos dos)
     const audioManager = new AudioManager(this);
-    audioManager.registerSfx('sfx_jump', 'sfx_coin');
+    audioManager.registerSfx('sfx_disparo', 'sfx_explosion', 'sfx_enemigo_disparo', 'sfx_golpe');
     this.registry.set('audioManager', audioManager);
 
     // Aplicar estado de silencio guardado

@@ -124,6 +124,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.bounds = this._resolveBounds(options.bounds);
     this.onDefeated = null;
     this.onEscape = null;
+    this.onShoot = null;
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -200,6 +201,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.onDefeated = typeof options.onDefeated === 'function' ? options.onDefeated : null;
     this.onEscape = typeof options.onEscape === 'function' ? options.onEscape : null;
+    this.onShoot = typeof options.onShoot === 'function' ? options.onShoot : null;
 
     const desiredKey = options.texture || preset.texture;
     const resolvedKey = ensureEnemyTexture(this.scene, desiredKey, preset);
@@ -215,10 +217,14 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this._zigzagSign = options.zigzagDirection === -1 ? -1 : 1;
 
     this.enableBody(true, x, y, true, true);
+    this.setDisplaySize(preset.width, preset.height);
     if (this.body) {
       // Garantiza que la gravedad global de main.js no altere la velocidad controlada
       this.body.setAllowGravity(false);
-      this.body.setSize(this.width, this.height, true);
+      const bodyW = Math.round(this.width * 1.25);
+      const bodyH = Math.round(this.height * 1.25);
+      this.body.setSize(bodyW, bodyH, false);
+      this.body.setOffset(this.width * (1 - 1.25) / 2, this.height * (1 - 1.25) / 2);
     }
 
     this.move(0);
@@ -313,6 +319,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         direction: { x: 0, y: 1 },
         bounds: this.bounds
       });
+      if (typeof this.onShoot === 'function') {
+        this.onShoot(this);
+      }
     }
 
     this._shootCooldownRemaining = this.fireRate;
@@ -402,6 +411,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   destroy(fromScene) {
     this.onDefeated = null;
     this.onEscape = null;
+    this.onShoot = null;
     this.bulletGroup = null;
     super.destroy(fromScene);
   }

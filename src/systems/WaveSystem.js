@@ -47,6 +47,7 @@ export default class WaveSystem {
     this.onWaveComplete = typeof options.onWaveComplete === 'function' ? options.onWaveComplete : null;
     this.onEnemySpawn = typeof options.onEnemySpawn === 'function' ? options.onEnemySpawn : null;
     this.onEnemyEscape = typeof options.onEnemyEscape === 'function' ? options.onEnemyEscape : null;
+    this.onEnemyShoot = typeof options.onEnemyShoot === 'function' ? options.onEnemyShoot : null;
 
     this.waveNumber = 0;
     this.state = 'idle'; // 'idle' | 'spawning' | 'active' | 'completed' | 'stopped'
@@ -213,7 +214,8 @@ export default class WaveSystem {
         minY: this.bounds.minY,
         maxY: this.bounds.maxY
       },
-      onEscape: (escapedEnemy) => this._handleEnemyEscape(escapedEnemy)
+      onEscape: (escapedEnemy) => this._handleEnemyEscape(escapedEnemy),
+      onShoot: (shooter) => this.onEnemyShoot?.(shooter)
     });
 
     this.activeEnemies.add(enemy);
@@ -391,5 +393,6 @@ export default class WaveSystem {
     this.onWaveComplete = null;
     this.onEnemySpawn = null;
     this.onEnemyEscape = null;
+    this.onEnemyShoot = null;
   }
 }

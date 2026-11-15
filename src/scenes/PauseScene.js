@@ -5,6 +5,13 @@ export default class PauseScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    const audioManager = this.registry.get('audioManager');
+    const muteIcon = this.add.image(width - 16, height - 16, 'imagen-mute').setOrigin(1, 1).setScale(0.15).setDepth(100).setVisible(!!audioManager?.isMuted());
+    this.input.keyboard.on('keydown-M', () => {
+      if (!audioManager) return;
+      const muted = audioManager.toggleMute();
+      muteIcon.setVisible(muted);
+    });
 
     // Fondo semitransparente oscuro que superpone la escena de juego
     this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0);
