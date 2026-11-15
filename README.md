@@ -15,12 +15,10 @@ y preferencias de audio en el navegador mediante `localStorage`.
 Clona el repositorio e instala las dependencias:
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/Jeimy-Jhair/Proyecto_Final_Web_GR7.git
 cd Proyecto_Final_Web_GR7
 npm install
 ```
-
-> Ruta del proyecto: `C:\Users\ASUS VIVOBOOK PRO\Documents\6. Sexto Semestre\Aplicaciones Web\Proyecto_Final_Web_GR7`
 
 ## 3. Ejecución
 
@@ -123,6 +121,7 @@ Los assets gráficos y de audio utilizados en este proyecto fueron obtenidos de:
   - YAGUARI VASCO MATEO ALEXANDER
   - SANCHEZ TIXE JEIMY JHAIR
   - JUMBO CORDONES JASMANNY DAVID
+    
 - Desarrollado con [Phaser 3](https://phaser.io/) y [Vite](https://vitejs.dev/).
 - Assets gráficos y de audio obtenidos de [Kenney](https://kenney.nl/) y [OpenGameArt](https://opengameart.org/), incluidos en `src/assets/`.
 
@@ -130,12 +129,3 @@ Los assets gráficos y de audio utilizados en este proyecto fueron obtenidos de:
 
 Este es un **proyecto académico** desarrollado con fines educativos como parte del curso
 de Aplicaciones Web (Proyecto Final, Grupo 7). No está destinado a uso comercial.
-
-El código fuente del proyecto se distribuye bajo la licencia **MIT**, salvo los assets
-gráficos y de audio de terceros (obtenidos de Kenney y OpenGameArt), que se rigen por
-sus propias licencias originales. Consulta los archivos de cada recurso y las páginas
-de origen para conocer los términos de uso aplicables.
-
-> Uso educativo y no comercial. Se permite el uso, copia y modificación del código con
-> fines académicos, siempre que se mantenga la atribución a los autores originales.
-EOF
