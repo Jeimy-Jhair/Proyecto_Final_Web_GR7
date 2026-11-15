@@ -1,3 +1,5 @@
+import AudioManager from '../managers/AudioManager.js';
+
 export default class MenuScene extends Phaser.Scene {
   constructor() {
     super('MenuScene');
@@ -5,6 +7,17 @@ export default class MenuScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    const audioManager = new AudioManager(this);
+    audioManager.registerSfx('sfx_disparo', 'sfx_explosion', 'sfx_enemigo_disparo', 'sfx_golpe');
+    this.registry.set('audioManager', audioManager);
+    audioManager.playMusic('musica-menu');
+    this.events.once('shutdown', () => audioManager.stopMusic());
+
+    const muteIcon = this.add.image(width - 16, height - 16, 'imagen-mute').setOrigin(1, 1).setScale(0.15).setDepth(100).setVisible(audioManager.isMuted());
+    this.input.keyboard.on('keydown-M', () => {
+      const muted = audioManager.toggleMute();
+      muteIcon.setVisible(muted);
+    });
 
     // === ZONA PARA UI (compañero de interfaz) ===
     // Agrega aquí los elementos visuales del menú: logo, botones, fondos,
@@ -26,6 +39,7 @@ export default class MenuScene extends Phaser.Scene {
 
     // --- Lógica de transición de estados (NO BORRAR) ---
     const startGame = () => {
+      audioManager.stopMusic();
       this.scene.start('GameScene');
     };
 

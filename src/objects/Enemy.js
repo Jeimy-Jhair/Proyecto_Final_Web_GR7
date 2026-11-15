@@ -124,6 +124,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.bounds = this._resolveBounds(options.bounds);
     this.onDefeated = null;
     this.onEscape = null;
+    this.onShoot = null;
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -200,6 +201,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.onDefeated = typeof options.onDefeated === 'function' ? options.onDefeated : null;
     this.onEscape = typeof options.onEscape === 'function' ? options.onEscape : null;
+    this.onShoot = typeof options.onShoot === 'function' ? options.onShoot : null;
 
     const desiredKey = options.texture || preset.texture;
     const resolvedKey = ensureEnemyTexture(this.scene, desiredKey, preset);
@@ -313,6 +315,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         direction: { x: 0, y: 1 },
         bounds: this.bounds
       });
+      if (typeof this.onShoot === 'function') {
+        this.onShoot(this);
+      }
     }
 
     this._shootCooldownRemaining = this.fireRate;
@@ -402,6 +407,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
   destroy(fromScene) {
     this.onDefeated = null;
     this.onEscape = null;
+    this.onShoot = null;
     this.bulletGroup = null;
     super.destroy(fromScene);
   }

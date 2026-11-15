@@ -1,4 +1,11 @@
 import AudioManager from '../managers/AudioManager.js';
+import musicaMenuUrl from '../assets/audio/musica-menú.ogg?url';
+import musicaGameplayUrl from '../assets/audio/musica-gameplay.wav?url';
+import sfxDisparoUrl from '../assets/audio/efecto-disparo.wav?url';
+import sfxExplosionUrl from '../assets/audio/efecto-explosion.wav?url';
+import sfxEnemigoDisparoUrl from '../assets/audio/efecto-enemigo-disparo.wav?url';
+import sfxGolpeUrl from '../assets/audio/efecto-golpe.wav?url';
+import imagenMuteUrl from '../assets/images/imagen-mute.png?url';
 
 export default class Preloader extends Phaser.Scene {
   constructor() {
@@ -57,21 +64,20 @@ export default class Preloader extends Phaser.Scene {
       console.warn('Preloader: no se pudo cargar', file.key, file.src);
     });
 
-    // --- Carga de recursos de audio ---
-    // Coloca tus archivos en src/assets/audio/ (y sírvelos vía public/ o importa con Vite)
-    this.load.audio('bgm', 'assets/audio/bgm.mp3');
-    this.load.audio('sfx_jump', 'assets/audio/sfx_jump.wav');
-    this.load.audio('sfx_coin', 'assets/audio/sfx_coin.wav');
-
-    // --- Carga de recursos de imágenes ---
-    this.load.image('logo', 'assets/images/logo.png');
-    this.load.image('player', 'assets/images/player.png');
+    // --- Carga de recursos de audio (importados con Vite) ---
+    this.load.audio('musica-menu', musicaMenuUrl);
+    this.load.audio('musica-gameplay', musicaGameplayUrl);
+    this.load.audio('sfx_disparo', sfxDisparoUrl);
+    this.load.audio('sfx_explosion', sfxExplosionUrl);
+    this.load.audio('sfx_enemigo_disparo', sfxEnemigoDisparoUrl);
+    this.load.audio('sfx_golpe', sfxGolpeUrl);
+    this.load.image('imagen-mute', imagenMuteUrl);
   }
 
   create() {
     // Inicializar AudioManager y registrar SFX (al menos dos)
     const audioManager = new AudioManager(this);
-    audioManager.registerSfx('sfx_jump', 'sfx_coin');
+    audioManager.registerSfx('sfx_disparo', 'sfx_explosion', 'sfx_enemigo_disparo', 'sfx_golpe');
     this.registry.set('audioManager', audioManager);
 
     // Aplicar estado de silencio guardado
