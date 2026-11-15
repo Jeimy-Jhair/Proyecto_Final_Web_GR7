@@ -1,5 +1,7 @@
 # Assets y Audio — Arcade Shooter
 
+> Documentación detallada de las imágenes: ver `docs/IMAGENES.md`.
+
 ## 1. Estructura de archivos
 Los recursos se encuentran en:
 

@@ -58,6 +58,6 @@ Se integraron los módulos desarrollados por el Integrante 1 dentro de la escena
 - `src/scenes/Preloader.js`
 - `src/main.js`
 - `src/managers/AudioManager.js`
-- `src/managers/StorageManager.js`
+- `src/managers/StorageManager.js` (ver `docs/LOCAL_STORAGE.md`)
 - `src/objects/Enemy.js`
 - `src/systems/WaveSystem.js`
