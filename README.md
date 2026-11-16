@@ -6,7 +6,7 @@ El juego utiliza una estética arcade de **8 bits**, con naves e iconos pixel ar
 
 ## Historia
 
-El relato completo del juego está en [`docs/HISTORIA.md`](docs/HISTORIA.md): el origen del nombre *Striker*, la protagonista y su nave, la lore de los tres tipos de enemigo y el arco de las diez oleadas. El documento también incluye un anexo que relaciona cada elemento narrativo con su equivalente mecánico en el código, y otro con propuestas de textos para llevar la historia dentro de las pantallas.
+Hace nueve mil años, el corazón de la galaxia se apagó dejando una lluvia eterna de ceniza que despierta a letales máquinas dormidas en la oscuridad del espacio. En Galaxy Striker, tomas los mandos de la Ráfaga, el último caza interceptor, en la piel de Iris Calderón: una joven piloto que desafía una orden imposible para descender a través de diez sectores infestados de enjambres enemigos. Guiada por una misteriosa transmisión que repite la voz de su hermana desaparecida desde el abismo, deberás abrirte paso a golpe limpio con solo tres cascos de resistencia para llegar al núcleo, rescatar la última chispa de vida y volver a encender una estrella antes de que el silencio consuma todo lo que queda.
 
 ## Requisitos
 
