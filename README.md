@@ -1,131 +1,106 @@
-# Arcade Shooter — Proyecto Final Web GR7
+# Galaxy Striker
 
-Juego arcade shooter desarrollado con **Phaser 3** y **Vite**. El jugador controla una nave,
-dispara a oleadas de enemigos, progresa por niveles y guarda su récord, nivel alcanzado
-y preferencias de audio en el navegador mediante `localStorage`.
+Galaxy Striker es un juego de disparos espaciales en 2D desarrollado con **Phaser 3 y JavaScript** para la asignatura de Aplicaciones Web. El objetivo es controlar una nave, esquivar ataques y eliminar enemigos para avanzar en la partida y conseguir la mayor puntuación posible.
 
-## 1. Requisitos
+El juego utiliza una estética arcade de **8 bits**, con naves e iconos pixel art, efectos de impacto, música, controles de teclado y una interfaz adaptada a distintos tamaños de pantalla.
 
-- Node.js 18 o superior (probado con Node.js 24).
-- npm (incluido con Node.js).
-- Navegador moderno con soporte de Canvas y `localStorage`.
+## Requisitos
 
-## 2. Instalación
+- Node.js y npm instalados.
+- Un navegador actualizado (Chrome, Edge o Firefox).
 
-Clona el repositorio e instala las dependencias:
+## Instalación y ejecución
+
+Clonar el repositorio:
 
 ```bash
 git clone https://github.com/Jeimy-Jhair/Proyecto_Final_Web_GR7.git
 cd Proyecto_Final_Web_GR7
+```
+
+Instalar las dependencias:
+
+```bash
 npm install
 ```
 
-## 3. Ejecución
-
-### Desarrollo
+Iniciar el servidor de desarrollo:
 
 ```bash
 npm run dev
 ```
 
-Abre la URL que muestra Vite (por defecto `http://localhost:5173`).
+Abrir en el navegador la dirección local que muestre Vite, normalmente `http://localhost:5173/`.
 
-### Compilación para producción
+> Si las mejoras de interfaz todavía no se han integrado a `main`, se pueden consultar desde la rama `feature/interfaz-ui` mediante `git switch feature/interfaz-ui` después de clonar y actualizar las referencias remotas.
 
-```bash
-npm run build
+## Controles
+
+| Tecla | Acción |
+| --- | --- |
+| `W`, `A`, `S`, `D` o flechas | Mover la nave |
+| `Espacio` | Disparar |
+| `P` | Pausar |
+| `Esc` | Volver o reanudar, según la pantalla |
+| `M` | Activar o silenciar el sonido |
+| `Enter` | Iniciar o confirmar en las pantallas correspondientes |
+
+En dispositivos táctiles se muestran botones de dirección y disparo, además de accesos a pausa y sonido.
+
+## Cómo funciona
+
+Durante la partida aparecen enemigos con distintos comportamientos y niveles de resistencia. El jugador gana puntos al eliminarlos, pierde vidas cuando recibe impactos y puede avanzar a niveles de mayor dificultad. El HUD muestra la información principal de la partida, como puntos, vidas, nivel y oleada.
+
+El juego incluye menú principal, instrucciones, pausa, pantalla de derrota y pantalla de victoria. Se utiliza `localStorage` para conservar información como el récord, el nivel alcanzado y las preferencias de sonido.
+
+## Organización del proyecto
+
+```text
+src/
+├── assets/        Recursos gráficos y de audio
+├── managers/      Audio y almacenamiento local
+├── objects/       Jugador, enemigos y proyectiles
+├── scenes/        Menú, juego, pausa, instrucciones y finales
+├── systems/       Colisiones, puntuación, oleadas y niveles
+├── ui/            Botones, HUD, iconos y controles táctiles
+└── main.js        Configuración e inicio de Phaser
+
+tests/             Pruebas del gameplay
+public/            Recursos públicos, como el favicon
 ```
 
-Los archivos listos para desplegar quedan en la carpeta `dist/`.
+La separación por escenas, objetos y sistemas permite trabajar las mecánicas y la interfaz de manera independiente y facilita la integración de los cambios.
 
-### Vista previa de producción
+## Pruebas y compilación
 
-```bash
-npm run preview
-```
-
-### Pruebas
+Ejecutar las pruebas disponibles:
 
 ```bash
 node --test tests/gameplay.test.js
 ```
 
-## 4. Controles
+Generar la versión de producción:
 
-| Tecla / Acción | Función |
-| :--- | :--- |
-| Flechas / WASD | Mover la nave |
-| Espacio | Disparar |
-| M | Silenciar / activar audio |
-| P | Pausar el juego |
-| ESC | Reanudar desde la pausa |
-| R | Reiniciar partida (en Game Over) |
-| ENTER | Volver al menú (en Game Over) o iniciar (en Menú) |
-| Clic | Iniciar / reiniciar partida |
-
-## 5. Estructura del proyecto
-
-```text
-Proyecto_Final_Web_GR7/
-├── docs/                      # Documentación técnica
-│   ├── ASSETS_Y_AUDIO.md
-│   ├── ENTREGA_GAMEPLAY.md
-│   ├── IMPLEMENTACION_COMPLETA.md
-│   ├── IMAGENES.md
-│   ├── INTEGRACION_GAMEPLAY.md
-│   └── LOCAL_STORAGE.md
-├── src/
-│   ├── assets/                # Imágenes y audio
-│   ├── managers/              # AudioManager, StorageManager
-│   ├── objects/               # Player, Enemy, Bullet, utilidades
-│   ├── scenes/                # Boot, Preloader, Menu, Game, Pause, GameOver
-│   ├── systems/               # Score, Level, Wave, Collision
-│   └── main.js                # Configuración de Phaser
-├── tests/                     # Pruebas automatizadas
-│   ├── gameplay.test.js
-│   └── phaserTestHarness.js
-├── index.html
-├── package.json
-├── vite.config.js
-└── README.md
+```bash
+npm run build
 ```
 
-## 6. Persistencia (`localStorage`)
+Los archivos compilados se generan en `dist/`. Para revisar esa compilación localmente:
 
-El juego guarda automáticamente:
+```bash
+npm run preview
+```
 
-- **Récord**: mayor puntuación obtenida.
-- **Nivel alcanzado**: último nivel desbloqueado/completado.
-- **Audio**: estado de silencio y volúmenes.
+## Tecnologías
 
-Los datos se mantienen aunque se cierre o actualice la página.
-Ver `docs/LOCAL_STORAGE.md` para detalles de la API.
+- **Phaser 3:** escenas, renderizado y físicas Arcade.
+- **JavaScript:** lógica, controles e interacción.
+- **Vite:** desarrollo local y compilación.
+- **HTML y CSS:** página contenedora y adaptación visual.
+- **localStorage:** datos guardados en el navegador.
 
-## 7. Assets e imágenes
+## Créditos
 
-Las imágenes y sonidos se cargan en `Preloader.js` y se referencian por claves estables
-(`player`, `enemy_basic`, `bullet_player`, `imagen-mute`, `meteor_*`, etc.).
-Si falta un recurso, se genera una textura procedural de respaldo.
-Ver `docs/IMAGENES.md` y `docs/ASSETS_Y_AUDIO.md`.
+Proyecto desarrollado para **Aplicaciones Web**, carrera de Ingeniería en Software. El código, las escenas, las mecánicas y la interfaz se desarrollaron de forma colaborativa. El historial de contribuciones puede consultarse en el repositorio.
 
-### Fuentes de assets e imágenes
-
-Los assets gráficos y de audio utilizados en este proyecto fueron obtenidos de:
-
-- [Kenney](https://kenney.nl/) — assets gráficos y de audio de uso libre.
-- [OpenGameArt](https://opengameart.org/) — recursos gráficos y de audio de la comunidad.
-
-## 8. Créditos
-
-- **Equipo GR7** — Proyecto Final de Aplicaciones Web.
-  - YAGUARI VASCO MATEO ALEXANDER
-  - SANCHEZ TIXE JEIMY JHAIR
-  - JUMBO CORDONES JASMANNY DAVID
-    
-- Desarrollado con [Phaser 3](https://phaser.io/) y [Vite](https://vitejs.dev/).
-- Assets gráficos y de audio obtenidos de [Kenney](https://kenney.nl/) y [OpenGameArt](https://opengameart.org/), incluidos en `src/assets/`.
-
-## 9. Licencia
-
-Este es un **proyecto académico** desarrollado con fines educativos como parte del curso
-de Aplicaciones Web (Proyecto Final, Grupo 7). No está destinado a uso comercial.
+**Repositorio:** https://github.com/Jeimy-Jhair/Proyecto_Final_Web_GR7
