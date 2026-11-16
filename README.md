@@ -4,6 +4,10 @@ Galaxy Striker es un juego de disparos espaciales en 2D desarrollado con **Phase
 
 El juego utiliza una estética arcade de **8 bits**, con naves e iconos pixel art, efectos de impacto, música, controles de teclado y una interfaz adaptada a distintos tamaños de pantalla.
 
+## Historia
+
+El relato completo del juego está en [`docs/HISTORIA.md`](docs/HISTORIA.md): el origen del nombre *Striker*, la protagonista y su nave, la lore de los tres tipos de enemigo y el arco de las diez oleadas. El documento también incluye un anexo que relaciona cada elemento narrativo con su equivalente mecánico en el código, y otro con propuestas de textos para llevar la historia dentro de las pantallas.
+
 ## Requisitos
 
 - Node.js y npm instalados.
