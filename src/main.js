@@ -5,18 +5,21 @@ import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import PauseScene from './scenes/PauseScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
+import InstructionsScene from './scenes/InstructionsScene.js';
+import VictoryScene from './scenes/VictoryScene.js';
 
-/**
- * Configuración inicial del juego.
- * - Físicas: Arcade
- * - Game loop optimizado: mínimo 45 FPS, objetivo 60 FPS.
- */
 const config = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: 1280,
+  height: 720,
   parent: 'game-container',
-  backgroundColor: '#1a1a2e',
+  backgroundColor: '#050716',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720
+  },
   physics: {
     default: 'arcade',
     arcade: {
@@ -24,21 +27,20 @@ const config = {
       debug: false
     }
   },
-  // Optimización estricta del game loop
   fps: {
-    target: 60,        // FPS objetivo
-    min: 45,           // Mínimo de FPS aceptable
-    forceSetTimeOut: false, // Usar requestAnimationFrame para mayor fluidez
+    target: 60,
+    min: 45,
+    forceSetTimeOut: false,
     deltaHistory: 10,
     panicMax: 120,
     smoothStep: true
   },
   render: {
-    antialias: true,
-    pixelArt: false,
+    antialias: false,
+    pixelArt: true,
     roundPixels: true
   },
-  scene: [Boot, Preloader, MenuScene, GameScene, PauseScene, GameOverScene]
+  scene: [Boot, Preloader, MenuScene, InstructionsScene, GameScene, PauseScene, GameOverScene, VictoryScene]
 };
 
 const game = new Phaser.Game(config);

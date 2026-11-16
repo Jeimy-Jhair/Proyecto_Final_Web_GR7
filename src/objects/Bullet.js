@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import ensureTexture from './ensureTexture.js';
+import { draw8BitBullet } from '../ui/PixelArt.js';
 
 const DEFAULT_BULLET_TEXTURE = {
   player: 'bullet_player',
@@ -7,33 +8,12 @@ const DEFAULT_BULLET_TEXTURE = {
 };
 
 function ensureBulletTexture(scene, key, owner) {
-  const color = owner === 'enemy' ? 0xff4d6d : 0x00f5d4;
   return ensureTexture(scene, key, 8, 18, (graphics, width, height) => {
-    graphics.fillStyle(color, 1);
-    graphics.fillRoundedRect(0, 0, width, height, 3);
-    graphics.fillStyle(0xffffff, 0.85);
-    graphics.fillRect(2, 2, width - 4, Math.max(4, height * 0.35));
+    draw8BitBullet(graphics, owner, width, height);
   });
 }
 
-/**
- * Representa un proyectil (aliado o enemigo) compatible con object pooling
- * mediante `Phaser.Physics.Arcade.Group`.
- *
- * Contrato recomendado con grupos físicos:
- * - Pooling estándar: `group.get(x, y)?.fire(x, y, options)` con `classType: Bullet`.
- * - Inserción manual: crear con `{ autoFire: false }`, añadir con `group.add(bullet)` y
- *   luego llamar `bullet.fire(x, y, options)`. Como resguardo adicional, `preUpdate`
- *   restaura `allowGravity = false` y la velocidad si `PhysicsGroup.add()` los sobrescribió.
- */
 export default class Bullet extends Phaser.Physics.Arcade.Sprite {
-  /**
-   * @param {Phaser.Scene} scene - Escena propietaria.
-   * @param {number} [x=0] - Posición inicial X.
-   * @param {number} [y=0] - Posición inicial Y.
-   * @param {string|object} [textureOrOptions='bullet_player'] - Clave de textura o mapa de opciones.
-   * @param {string|number} [frame] - Frame opcional de spritesheet/atlas.
-   */
   constructor(scene, x = 0, y = 0, textureOrOptions = DEFAULT_BULLET_TEXTURE.player, frame = undefined) {
     const isOptionsObj = typeof textureOrOptions === 'object' && textureOrOptions !== null;
     const options = isOptionsObj ? textureOrOptions : {};
@@ -83,20 +63,6 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     };
   }
 
-  /**
-   * Activa y lanza el proyectil desde `(x, y)` con la configuración indicada.
-   *
-   * @param {number} x - Coordenada X de origen.
-   * @param {number} y - Coordenada Y de origen.
-   * @param {object} [options={}] - Opciones de disparo.
-   * @param {'player'|'enemy'} [options.owner='player'] - Propietario del proyectil.
-   * @param {number} [options.damage=1] - Daño que inflige al impactar.
-   * @param {number} [options.speed=520] - Rapidez en píxeles por segundo.
-   * @param {{x: number, y: number}} [options.direction] - Vector de dirección.
-   * @param {string} [options.texture] - Clave de textura opcional.
-   * @param {{minX?: number, maxX?: number, minY?: number, maxY?: number}} [options.bounds] - Límites del área jugable.
-   * @returns {Bullet} La instancia actual.
-   */
   fire(x, y, options = {}) {
     this.owner = options.owner === 'enemy' ? 'enemy' : 'player';
     this.damage = Number.isFinite(options.damage) && options.damage > 0 ? options.damage : 1;
@@ -117,7 +83,6 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.enableBody(true, x, y, true, true);
 
     if (this.body) {
-      // Garantiza vuelo recto aunque la escena tenga gravedad global (main.js: gravity.y = 300)
       this.body.setAllowGravity(false);
       const bodyW = Math.round(this.width * 1.25);
       const bodyH = Math.round(this.height * 1.25);
@@ -148,7 +113,6 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    // Resguardo por si se llamó a `physicsGroup.add(bullet)` después de `fire()`
     if (!this.hasHit && this._isFired && this.body) {
       if (this.body.allowGravity) {
         this.body.setAllowGravity(false);
@@ -174,12 +138,6 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /**
-   * Marca el proyectil como impactado una sola vez y lo desactiva.
-   * Evita aplicar daño duplicado si ocurren múltiples overlaps en el mismo frame.
-   *
-   * @returns {boolean} `true` si el impacto es válido y no había sido consumido.
-   */
   consumeHit() {
     if (this.hasHit || !this.active) {
       return false;
@@ -189,9 +147,6 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     return true;
   }
 
-  /**
-   * Desactiva el proyectil y su cuerpo físico para devolverlo al pool del grupo.
-   */
   deactivate() {
     this._isFired = false;
     this._velocityX = 0;
@@ -220,4 +175,3 @@ export default class Bullet extends Phaser.Physics.Arcade.Sprite {
     return this.owner === 'enemy';
   }
 }
-

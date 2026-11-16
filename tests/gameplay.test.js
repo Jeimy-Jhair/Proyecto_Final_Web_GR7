@@ -11,6 +11,7 @@ const { default: Enemy, ENEMY_TYPES } = await import('../src/objects/Enemy.js');
 const { default: Bullet } = await import('../src/objects/Bullet.js');
 const { default: CollisionSystem } = await import('../src/systems/CollisionSystem.js');
 const { default: WaveSystem } = await import('../src/systems/WaveSystem.js');
+const { default: StorageManager } = await import('../src/managers/StorageManager.js');
 
 describe('ScoreSystem', () => {
   test('inicia en el puntaje esperado, suma puntos válidos, ignora inválidos y reinicia', () => {
@@ -56,6 +57,10 @@ describe('LevelSystem', () => {
     assert.equal(levels.getLevel(), 1);
     assert.deepEqual(levels.getDifficulty().enemyTypes, ['basic']);
 
+    const victoryLevels = new LevelSystem({ victoryWave: 10 });
+    assert.equal(victoryLevels.isVictoryWave(9), false);
+    assert.equal(victoryLevels.isVictoryWave(10), true);
+
     // Mismo waveId no debe incrementar dos veces
     const first = levels.recordWaveCompleted(1);
     assert.equal(first.leveledUp, true);
@@ -83,6 +88,91 @@ describe('LevelSystem', () => {
     levels.reset();
     assert.equal(levels.getLevel(), 1);
     assert.equal(levels.recordWaveCompleted(1).leveledUp, true);
+  });
+
+  test('progresa por bajas de enemigos: nivel 2 a los 20, nivel 3 a los 40 y conteo único sin duplicados', () => {
+    const levelUps = [];
+    const levels = new LevelSystem({
+      initialLevel: 1,
+      enemiesPerLevel: 20,
+      onLevelUp: (data) => levelUps.push(data.level)
+    });
+
+    assert.equal(levels.getLevel(), 1);
+    assert.equal(levels.getDefeatedEnemies(), 0);
+    assert.equal(levels.getEnemiesInCurrentLevel(), 0);
+    assert.equal(levels.getEnemiesNeededForNextLevel(), 20);
+
+    const enemyA = { id: 'enemy-A' };
+    levels.recordEnemyDefeated(enemyA);
+    assert.equal(levels.getDefeatedEnemies(), 1);
+    levels.recordEnemyDefeated(enemyA);
+    assert.equal(levels.getDefeatedEnemies(), 1);
+
+    for (let i = 2; i <= 19; i++) {
+      levels.recordEnemyDefeated({ id: `enemy-${i}` });
+    }
+    assert.equal(levels.getDefeatedEnemies(), 19);
+    assert.equal(levels.getLevel(), 1);
+
+    const res20 = levels.recordEnemyDefeated({ id: 'enemy-20' });
+    assert.equal(res20.leveledUp, true);
+    assert.equal(levels.getLevel(), 2);
+    assert.equal(levels.getEnemiesInCurrentLevel(), 0);
+    assert.equal(levels.getDefeatedEnemies(), 20);
+
+    for (let i = 21; i <= 39; i++) {
+      levels.recordEnemyDefeated({ id: `enemy-${i}` });
+    }
+    assert.equal(levels.getLevel(), 2);
+
+    const res40 = levels.recordEnemyDefeated({ id: 'enemy-40' });
+    assert.equal(res40.leveledUp, true);
+    assert.equal(levels.getLevel(), 3);
+    assert.deepEqual(levelUps, [2, 3]);
+  });
+
+  test('escala la dificultad por nivel ajustando velocidad, cantidad de enemigos e intervalos', () => {
+    const levels = new LevelSystem({ initialLevel: 1 });
+    const diff1 = levels.getDifficulty();
+    assert.equal(diff1.level, 1);
+    assert.equal(diff1.speedMultiplier, 1);
+    assert.deepEqual(diff1.enemyTypes, ['basic']);
+
+    for (let i = 1; i <= 20; i++) {
+      levels.recordEnemyDefeated({ id: `scale-${i}` });
+    }
+    const diff2 = levels.getDifficulty();
+    assert.equal(diff2.level, 2);
+    assert.ok(diff2.speedMultiplier > diff1.speedMultiplier);
+    assert.deepEqual(diff2.enemyTypes, ['basic', 'fast']);
+
+    for (let i = 21; i <= 40; i++) {
+      levels.recordEnemyDefeated({ id: `scale-${i}` });
+    }
+    const diff3 = levels.getDifficulty();
+    assert.equal(diff3.level, 3);
+    assert.deepEqual(diff3.enemyTypes, ['basic', 'fast', 'tank']);
+  });
+
+  test('persiste el nivel alcanzado mediante StorageManager', () => {
+    StorageManager.setLevel(1);
+    assert.equal(StorageManager.getLevel(), 1);
+    StorageManager.setLevel(4);
+    assert.equal(StorageManager.getLevel(), 4);
+    StorageManager.setLevel(0);
+    assert.equal(StorageManager.getLevel(), 4);
+    StorageManager.setLevel('invalid');
+    assert.equal(StorageManager.getLevel(), 4);
+    StorageManager.setLevel(1);
+    assert.equal(StorageManager.getLevel(), 1);
+  });
+
+  test('evalua la condicion de victoria al completar la oleada 10', () => {
+    const levels = new LevelSystem({ victoryWave: 10 });
+    assert.equal(levels.isVictoryWave(1), false);
+    assert.equal(levels.isVictoryWave(9), false);
+    assert.equal(levels.isVictoryWave(10), true);
   });
 });
 
@@ -513,23 +603,21 @@ describe('Módulos con Phaser HEADLESS y Físicas Arcade', () => {
     });
 
     // 3. Enemigo zigzag invierte dirección suavemente al tocar el borde sin oscilar contra la pared
-    const fastEnemy = enemies.get(15, 100);
-    fastEnemy.spawn(15, 100, { type: 'fast', zigzagDirection: -1 });
-    fastEnemy.move(0); // cos(0) = 1 -> con sign=-1 da vx = -110 hacia minX (15)
-    assert.equal(fastEnemy.x, 15);
-    assert.ok(fastEnemy.body.velocity.x > 0, 'Debe rebotar hacia adentro');
-    fastEnemy.setPosition(18, 102); // siguiente frame ya separado del borde
+    const fastEnemy = enemies.get(21, 100);
+    fastEnemy.spawn(21, 100, { type: 'fast', zigzagDirection: -1 });
+    fastEnemy.move(0);
+    assert.equal(fastEnemy.x, 21);
+    assert.ok(fastEnemy.body.velocity.x > 0);
+    fastEnemy.setPosition(24, 102);
     fastEnemy.move(16);
-    assert.ok(fastEnemy.body.velocity.x > 0, 'Debe mantener dirección hacia adentro sin vibrar al borde');
+    assert.ok(fastEnemy.body.velocity.x > 0);
 
-    // 4. Bullet creado con autoFire y añadido manualmente a PhysicsGroup conserva vuelo y sin gravedad
     const manualBullet = new Bullet(scene, 400, 300, { owner: 'enemy', speed: 250 });
-    enemyBullets.add(manualBullet); // PhysicsGroup.add reinicia allowGravity=true y velocity=(0,0)
+    enemyBullets.add(manualBullet);
     manualBullet.preUpdate(16, 16);
     assert.equal(manualBullet.body.allowGravity, false);
     assert.equal(manualBullet.body.velocity.y, 250);
 
-    // 5. WaveSystem ignora speedMultiplier <= 0 y healthBonus < 0 en waveConfig
     const levelSystem = new LevelSystem({ initialLevel: 1, baseEnemyCount: 1 });
     const waveSystem = new WaveSystem(scene, enemies, { levelSystem, spawnImmediately: true });
     waveSystem.startWave(1, { speedMultiplier: -5, healthBonus: -3 });
@@ -537,6 +625,56 @@ describe('Módulos con Phaser HEADLESS y Físicas Arcade', () => {
     assert.ok(spawned.speed > 0);
     assert.ok(spawned.getHealth() >= 1);
     waveSystem.destroy();
+  });
+
+  test('integridad de colisiones con los nuevos tamaños de nave del jugador y enemigos', () => {
+    const { scene } = ctx;
+    const playerBullets = scene.physics.add.group({ classType: Bullet, runChildUpdate: true });
+    const enemyBullets = scene.physics.add.group({ classType: Bullet, runChildUpdate: true });
+    const enemies = scene.physics.add.group({ classType: Enemy, runChildUpdate: true });
+
+    const player = new Player(scene, 400, 500, {
+      bulletGroup: playerBullets,
+      fireRate: 0,
+      invulnerabilityDuration: 0
+    });
+    assert.equal(player.displayWidth, 54);
+    assert.equal(player.displayHeight, 54);
+
+    const basic = enemies.get(400, 500);
+    basic.spawn(400, 500, { type: 'basic' });
+    assert.equal(basic.displayWidth, 48);
+    assert.equal(basic.displayHeight, 48);
+
+    const fast = enemies.get(100, 100);
+    fast.spawn(100, 100, { type: 'fast' });
+    assert.equal(fast.displayWidth, 42);
+    assert.equal(fast.displayHeight, 42);
+
+    const tank = enemies.get(200, 200);
+    tank.spawn(200, 200, { type: 'tank' });
+    assert.equal(tank.displayWidth, 68);
+    assert.equal(tank.displayHeight, 68);
+
+    const collisions = new CollisionSystem(scene, {
+      player,
+      enemies,
+      playerBullets,
+      enemyBullets
+    });
+
+    assert.equal(player.getLives(), 3);
+    assert.equal(basic.isAlive(), true);
+
+    assert.equal(collisions.handlePlayerEnemyCollision(player, basic), true);
+
+    assert.equal(player.getLives(), 2);
+    assert.equal(basic.isAlive(), false);
+
+    player.destroy();
+    fast.destroy();
+    tank.destroy();
+    collisions.destroy();
   });
 });
 

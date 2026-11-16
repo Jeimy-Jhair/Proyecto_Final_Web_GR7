@@ -2,16 +2,25 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Proyecto Final Web GR7</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Galaxy Striker</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+      * {
+        box-sizing: border-box;
+      }
       html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
-        background: #000;
+        background: #020617;
         overflow: hidden;
+        font-family: 'Press Start 2P', monospace;
       }
       #game-container {
         width: 100%;
@@ -19,10 +28,45 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        margin: auto;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      #orientation-hint {
+        display: none;
+      }
+      @media screen and (orientation: portrait) and (max-width: 768px) {
+        #orientation-hint {
+          display: block;
+          position: fixed;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #0f172a;
+          border: 2px solid #22d3ee;
+          color: #facc15;
+          padding: 6px 12px;
+          font-size: 8px;
+          z-index: 9999;
+          pointer-events: none;
+          box-shadow: 0 4px 0 #020617;
+          text-align: center;
+          white-space: nowrap;
+        }
       }
     </style>
   </head>
   <body>
+    <div id="orientation-hint">GIRA EL DISPOSITIVO A HORIZONTAL</div>
     <div id="game-container"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

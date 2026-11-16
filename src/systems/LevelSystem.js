@@ -1,27 +1,4 @@
-/**
- * Controla la progresión de niveles y calcula los parámetros de dificultad
- * que consume `WaveSystem` para generar cada oleada sin duplicar responsabilidades.
- */
 export default class LevelSystem {
-  /**
-   * @param {object} [options={}] - Configuración de progresión.
-   * @param {number} [options.initialLevel=1] - Nivel inicial.
-   * @param {number|null} [options.maxLevel=null] - Nivel máximo opcional (`null` = infinito).
-   * @param {number} [options.wavesPerLevel=1] - Oleadas necesarias para subir de nivel.
-   * @param {number} [options.baseEnemyCount=6] - Enemigos base en el nivel 1.
-   * @param {number} [options.enemyCountIncrement=2] - Enemigos adicionales por nivel.
-   * @param {number} [options.maxEnemyCount=30] - Tope máximo de enemigos por oleada.
-   * @param {number} [options.baseSpawnInterval=1100] - Intervalo inicial entre spawns (ms).
-   * @param {number} [options.spawnIntervalDecrement=75] - Reducción de intervalo por nivel (ms).
-   * @param {number} [options.minSpawnInterval=350] - Intervalo mínimo entre spawns (ms).
-   * @param {number} [options.baseSpeedMultiplier=1] - Multiplicador inicial de velocidad.
-   * @param {number} [options.speedMultiplierStep=0.1] - Incremento del multiplicador por nivel.
-   * @param {number} [options.maxSpeedMultiplier=2.2] - Tope del multiplicador de velocidad.
-   * @param {number} [options.healthBonusEvery=3] - Cada cuántos niveles aumenta en +1 la salud base.
-   * @param {number} [options.maxHealthBonus=3] - Tope de salud extra por progresión.
-   * @param {number} [options.enemyShootingFromLevel=4] - Nivel desde el cual enemigos pueden disparar.
-   * @param {Function} [options.onLevelUp] - Callback `({ level, difficulty }) => void`.
-   */
   constructor(options = {}) {
     this.initialLevel = Number.isFinite(options.initialLevel) && options.initialLevel >= 1
       ? Math.floor(options.initialLevel)
@@ -29,9 +6,20 @@ export default class LevelSystem {
     this.maxLevel = Number.isFinite(options.maxLevel) && options.maxLevel >= this.initialLevel
       ? Math.floor(options.maxLevel)
       : null;
+    this.victoryWave = Number.isFinite(options.victoryWave) && options.victoryWave > 0
+      ? Math.floor(options.victoryWave)
+      : null;
     this.wavesPerLevel = Number.isFinite(options.wavesPerLevel) && options.wavesPerLevel >= 1
       ? Math.floor(options.wavesPerLevel)
       : 1;
+
+    this.enemiesPerLevel = Number.isFinite(options.enemiesPerLevel) && options.enemiesPerLevel > 0
+      ? Math.floor(options.enemiesPerLevel)
+      : 20;
+    this.defeatedEnemies = Number.isFinite(options.defeatedEnemies) && options.defeatedEnemies >= 0
+      ? Math.floor(options.defeatedEnemies)
+      : 0;
+    this.defeatedEnemyIds = new Set();
 
     this.baseEnemyCount = Number.isFinite(options.baseEnemyCount) && options.baseEnemyCount > 0
       ? Math.floor(options.baseEnemyCount)
@@ -81,13 +69,59 @@ export default class LevelSystem {
     this.lastCompletedWaveId = null;
   }
 
-  /**
-   * Registra la finalización de una oleada y avanza de nivel si se cumple `wavesPerLevel`.
-   * Evita incrementos repetidos si recibe el mismo `waveId`.
-   *
-   * @param {number|string|null} [waveId=null] - Identificador único de la oleada completada.
-   * @returns {{ leveledUp: boolean, level: number, difficulty: object }}
-   */
+  recordEnemyDefeated(enemy = null) {
+    if (enemy) {
+      if (this.defeatedEnemyIds.has(enemy)) {
+        return {
+          leveledUp: false,
+          level: this.level,
+          defeatedEnemies: this.defeatedEnemies
+        };
+      }
+      this.defeatedEnemyIds.add(enemy);
+    }
+
+    this.defeatedEnemies += 1;
+    const targetLevel = Math.floor(this.defeatedEnemies / this.enemiesPerLevel) + 1;
+    let leveledUp = false;
+
+    if (targetLevel > this.level) {
+      const prevLevel = this.level;
+      while (this.level < targetLevel && (this.maxLevel === null || this.level < this.maxLevel)) {
+        this.level += 1;
+        if (this.onLevelUp) {
+          this.onLevelUp({
+            level: this.level,
+            difficulty: this.getDifficulty()
+          });
+        }
+      }
+      leveledUp = this.level > prevLevel;
+    }
+
+    return {
+      leveledUp,
+      level: this.level,
+      defeatedEnemies: this.defeatedEnemies
+    };
+  }
+
+  getDefeatedEnemies() {
+    return this.defeatedEnemies;
+  }
+
+  getEnemiesInCurrentLevel() {
+    return this.defeatedEnemies % this.enemiesPerLevel;
+  }
+
+  getEnemiesNeededForNextLevel() {
+    return this.enemiesPerLevel;
+  }
+
+  getEnemiesProgress() {
+    return (this.defeatedEnemies % this.enemiesPerLevel) / this.enemiesPerLevel;
+  }
+
   recordWaveCompleted(waveId = null) {
     if (waveId !== null && waveId !== undefined && waveId === this.lastCompletedWaveId) {
       return {
@@ -117,11 +151,6 @@ export default class LevelSystem {
     };
   }
 
-  /**
-   * Avanza directamente al siguiente nivel respetando `maxLevel`.
-   *
-   * @returns {number} Nivel actualizado.
-   */
   nextLevel() {
     this.wavesCompletedInLevel = 0;
 
@@ -152,19 +181,14 @@ export default class LevelSystem {
     return this.maxLevel !== null && this.level >= this.maxLevel;
   }
 
-  /**
-   * Calcula los parámetros de dificultad correspondientes al nivel actual.
-   *
-   * @returns {{
-   *   level: number,
-   *   enemyCount: number,
-   *   spawnInterval: number,
-   *   speedMultiplier: number,
-   *   healthBonus: number,
-   *   enemyTypes: string[],
-   *   enableEnemyShooting: boolean
-   * }}
-   */
+  isVictoryWave(waveNumber) {
+    return this.victoryWave !== null && Number.isFinite(waveNumber) && waveNumber >= this.victoryWave;
+  }
+
+  getVictoryWave() {
+    return this.victoryWave;
+  }
+
   getDifficulty() {
     const offset = Math.max(0, this.level - 1);
 
@@ -205,13 +229,11 @@ export default class LevelSystem {
     };
   }
 
-  /**
-   * Reinicia el nivel y los contadores de progresión al estado inicial.
-   */
   reset() {
     this.level = this.initialLevel;
     this.wavesCompletedInLevel = 0;
     this.lastCompletedWaveId = null;
+    this.defeatedEnemies = 0;
+    this.defeatedEnemyIds.clear();
   }
 }
-
