@@ -2,45 +2,15 @@ import Phaser from 'phaser';
 import Bullet from './Bullet.js';
 import ensureTexture from './ensureTexture.js';
 import { acquireFromGroup } from './poolHelper.js';
+import { draw8BitPlayer } from '../ui/PixelArt.js';
 
 function ensurePlayerTexture(scene, key) {
-  return ensureTexture(scene, key, 40, 40, (graphics, width, height) => {
-    graphics.fillStyle(0x3a86ff, 1);
-    graphics.fillTriangle(width / 2, 2, 4, height - 4, width - 4, height - 4);
-    graphics.fillStyle(0x8ecae6, 1);
-    graphics.fillTriangle(width / 2, 10, width / 2 - 7, height - 10, width / 2 + 7, height - 10);
-    graphics.fillStyle(0xffbe0b, 1);
-    graphics.fillRect(width / 2 - 5, height - 6, 10, 4);
+  return ensureTexture(scene, key, 54, 54, (graphics, width, height) => {
+    draw8BitPlayer(graphics, width, height);
   });
 }
 
-/**
- * Representa la nave/personaje del jugador.
- * Administra movimiento normalizado en 8 direcciones, límites del área jugable,
- * disparo con cadencia e invulnerabilidad basadas en `delta` (pausables con la escena) y vidas.
- */
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-  /**
-   * @param {Phaser.Scene} scene - Escena de Phaser.
-   * @param {number} x - Posición inicial X.
-   * @param {number} y - Posición inicial Y.
-   * @param {object} [options={}] - Configuración del jugador.
-   * @param {string} [options.texture='player'] - Clave de textura en Phaser.
-   * @param {number} [options.speed=320] - Velocidad de desplazamiento en px/s.
-   * @param {number} [options.maxLives=3] - Vidas máximas e iniciales.
-   * @param {number} [options.lives] - Vidas iniciales (por defecto `maxLives`).
-   * @param {number} [options.fireRate=220] - Tiempo mínimo entre disparos en ms.
-   * @param {number} [options.bulletSpeed=540] - Velocidad de los proyectiles disparados.
-   * @param {number} [options.bulletDamage=1] - Daño de los proyectiles disparados.
-   * @param {string} [options.bulletTexture='bullet_player'] - Textura de proyectil.
-   * @param {Phaser.Physics.Arcade.Group} [options.bulletGroup=null] - Grupo de proyectiles del jugador.
-   * @param {number} [options.invulnerabilityDuration=1000] - Duración de invulnerabilidad tras daño (ms).
-   * @param {{minX?: number, maxX?: number, minY?: number, maxY?: number}} [options.bounds] - Límites del área jugable.
-   * @param {object} [options.controls] - Controles externos `{ cursors, wasd, shootKey }`.
-   * @param {Function} [options.onShoot] - Callback `(bullet) => void`.
-   * @param {Function} [options.onDamage] - Callback `({ lives, maxLives, amount }) => void`.
-   * @param {Function} [options.onDeath] - Callback `() => void`.
-   */
   constructor(scene, x, y, options = {}) {
     const rawKey = options.texture || 'player';
     const textureKey = ensurePlayerTexture(scene, rawKey);
@@ -85,15 +55,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
+    this.thrusters = scene.add?.graphics ? scene.add.graphics() : null;
+    if (this.thrusters) {
+      this.thrusters.setDepth(this.depth - 1);
+    }
+
+    const shipSize = options.displaySize ?? 54;
+    this.setDisplaySize(shipSize, shipSize);
+
     if (this.body) {
       this.body.setAllowGravity(false);
-      this.setDisplaySize(40, 40);
-      const bodyW = Math.round(this.width * 1.25);
-      const bodyH = Math.round(this.height * 1.25);
+      const bodyW = Math.round(this.width * 0.9);
+      const bodyH = Math.round(this.height * 0.9);
       this.body.setSize(bodyW, bodyH, false);
-      this.body.setOffset(this.width * (1 - 1.25) / 2, this.height * (1 - 1.25) / 2);
-    } else {
-      this.setDisplaySize(40, 40);
+      this.body.setOffset(this.width * (1 - 0.9) / 2, this.height * (1 - 0.9) / 2);
     }
 
     this._clampToBounds();
@@ -168,28 +143,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /**
-   * Establece entrada programática/virtual (útil para controles táctiles o pruebas).
-   * Pasar `null` devuelve el control al teclado.
-   *
-   * @param {{left?: boolean, right?: boolean, up?: boolean, down?: boolean, shoot?: boolean}|null} input
-   */
   setMovementInput(input) {
     this.manualInput = input ? { ...input } : null;
   }
 
-  /**
-   * Asigna o reemplaza el grupo de proyectiles del jugador.
-   *
-   * @param {Phaser.Physics.Arcade.Group} group
-   */
   setBulletGroup(group) {
     this.bulletGroup = group || null;
   }
 
-  /**
-   * Calcula y aplica la velocidad normalizada del jugador y respeta los límites del escenario.
-   */
   move() {
     if (!this.alive || !this.active) {
       if (this.body) {
@@ -228,11 +189,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /**
-   * Indica si el jugador puede disparar en este instante según su estado y cadencia.
-   *
-   * @returns {boolean}
-   */
   canShoot() {
     if (!this.alive || !this.active) {
       return false;
@@ -240,12 +196,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     return this._fireCooldownRemaining <= 0;
   }
 
-  /**
-   * Dispara un proyectil hacia arriba si la cadencia lo permite.
-   *
-   * @param {Phaser.Physics.Arcade.Group} [targetGroup=this.bulletGroup] - Grupo opcional de proyectiles.
-   * @returns {Bullet|null} El proyectil disparado o `null` si está en cooldown o inactivo.
-   */
   shoot(targetGroup = this.bulletGroup) {
     if (!this.canShoot()) {
       return null;
@@ -285,10 +235,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     return bullet;
   }
 
-  /**
-   * Actualiza los temporizadores internos del jugador usando `delta`, de modo que
-   * la cadencia e invulnerabilidad se congelen automáticamente durante `scene.pause()`.
-   */
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
@@ -305,14 +251,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /**
-   * Ciclo por frame: mueve al jugador, mantiene límites y dispara si la acción está activa.
-   */
   update() {
     if (!this.alive || !this.active) {
       if (this.body) {
         this.setVelocity(0, 0);
       }
+      this.thrusters?.clear();
       return;
     }
 
@@ -323,30 +267,42 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.shoot();
     }
 
-    // Retroalimentación visual sutil durante invulnerabilidad temporal
     if (this.isInvulnerable()) {
-      this.setAlpha(Math.floor(this._elapsedActiveTime / 80) % 2 === 0 ? 0.45 : 1);
-    } else if (this.alpha !== 1) {
-      this.setAlpha(1);
+      const isRed = Math.floor(this._elapsedActiveTime / 75) % 2 === 0;
+      if (isRed) {
+        this.setTint(0xff1111);
+        this.setAlpha(0.65);
+      } else {
+        this.clearTint();
+        this.setAlpha(1);
+      }
+    } else {
+      if (this.alpha !== 1) {
+        this.setAlpha(1);
+      }
+      this.clearTint();
+    }
+
+    if (this.thrusters) {
+      this.thrusters.clear();
+      const isMoving = Boolean(input.up || input.down || input.left || input.right);
+      const flicker = Math.floor(this._elapsedActiveTime / 80) % 2 === 0;
+      const flameLen = (isMoving ? 10 : 6) + (flicker ? 3 : 0);
+
+      this.thrusters.fillStyle(0xf97316, 0.9);
+      this.thrusters.fillRect(this.x - 9, this.y + 22, 5, flameLen);
+      this.thrusters.fillRect(this.x + 4, this.y + 22, 5, flameLen);
+
+      this.thrusters.fillStyle(0xfacc15, 1);
+      this.thrusters.fillRect(this.x - 8, this.y + 22, 3, Math.max(2, flameLen - 3));
+      this.thrusters.fillRect(this.x + 5, this.y + 22, 3, Math.max(2, flameLen - 3));
     }
   }
 
-  /**
-   * Indica si el jugador está actualmente protegido por invulnerabilidad temporal.
-   *
-   * @returns {boolean}
-   */
   isInvulnerable() {
     return this._invulnerabilityRemaining > 0;
   }
 
-  /**
-   * Aplica daño al jugador y actualiza sus vidas.
-   *
-   * @param {number} [amount=1] - Cantidad de vidas/daño a restar.
-   * @param {boolean} [ignoreInvulnerability=false] - Si `true`, ignora los i-frames actuales.
-   * @returns {boolean} `true` si el daño fue aplicado.
-   */
   takeDamage(amount = 1, ignoreInvulnerability = false) {
     if (!this.alive || !this.active || !Number.isFinite(amount) || amount <= 0) {
       return false;
@@ -359,6 +315,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const applied = Math.max(1, Math.floor(amount));
     this.lives = Math.max(0, this.lives - applied);
     this._invulnerabilityRemaining = this.invulnerabilityDuration;
+    this.setTint(0xff0000);
 
     if (this.onDamage) {
       this.onDamage({
@@ -371,7 +328,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.lives <= 0) {
       this.alive = false;
       this._invulnerabilityRemaining = 0;
+      this.clearTint();
       this.setAlpha(1);
+      this.thrusters?.clear();
       if (this.body) {
         this.disableBody(true, true);
       } else {
@@ -398,12 +357,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     return this.alive;
   }
 
-  /**
-   * Restaura al jugador a su estado inicial en la posición `(x, y)` para una nueva partida.
-   *
-   * @param {number} x
-   * @param {number} y
-   */
   reset(x, y) {
     this.lives = this.maxLives;
     this.alive = true;
@@ -411,7 +364,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this._invulnerabilityRemaining = 0;
     this._elapsedActiveTime = 0;
     this.manualInput = null;
+    this.clearTint();
     this.setAlpha(1);
+    this.thrusters?.clear();
 
     if (this.body) {
       this.enableBody(true, x, y, true, true);
@@ -444,6 +399,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    this.thrusters?.destroy();
+    this.thrusters = null;
     this.controls = null;
     this.manualInput = null;
     this.bulletGroup = null;

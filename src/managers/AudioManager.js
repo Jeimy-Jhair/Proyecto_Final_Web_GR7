@@ -11,7 +11,7 @@ export default class AudioManager {
     this.music = null;
     this.sfxKeys = [];
     this.muted = StorageManager.isMuted();
-    this.musicVolume = 0.5;
+    this.musicVolume = StorageManager.getMusicVolume();
     this.sfxVolume = 0.7;
 
     // Mezcla base (balance interno) por efecto
@@ -122,6 +122,19 @@ export default class AudioManager {
 
   getMasterSfxVolume() {
     return this.masterSfxVolume;
+  }
+
+  setMusicVolume(volume) {
+    const num = Number(volume);
+    if (!Number.isFinite(num)) return this.musicVolume;
+    this.musicVolume = Math.min(1, Math.max(0, num));
+    StorageManager.setMusicVolume(this.musicVolume);
+    if (this.music) this.music.setVolume(this.musicVolume);
+    return this.musicVolume;
+  }
+
+  getMusicVolume() {
+    return this.musicVolume;
   }
 
   /**

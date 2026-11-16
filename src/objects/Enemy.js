@@ -2,16 +2,13 @@ import Phaser from 'phaser';
 import Bullet from './Bullet.js';
 import ensureTexture from './ensureTexture.js';
 import { acquireFromGroup } from './poolHelper.js';
+import { draw8BitEnemy } from '../ui/PixelArt.js';
 
-/**
- * Configuración base por tipo de enemigo. Centraliza parámetros para evitar
- * números mágicos y permitir escalado desde `WaveSystem` / `LevelSystem`.
- */
 export const ENEMY_TYPES = {
   basic: {
     texture: 'enemy_basic',
-    width: 36,
-    height: 36,
+    width: 48,
+    height: 48,
     color: 0xe63946,
     speed: 120,
     health: 1,
@@ -27,8 +24,8 @@ export const ENEMY_TYPES = {
   },
   fast: {
     texture: 'enemy_fast',
-    width: 30,
-    height: 30,
+    width: 42,
+    height: 42,
     color: 0xf77f00,
     speed: 190,
     health: 1,
@@ -44,8 +41,8 @@ export const ENEMY_TYPES = {
   },
   tank: {
     texture: 'enemy_tank',
-    width: 48,
-    height: 48,
+    width: 68,
+    height: 68,
     color: 0x9b5de5,
     speed: 75,
     health: 3,
@@ -62,30 +59,16 @@ export const ENEMY_TYPES = {
 };
 
 function ensureEnemyTexture(scene, key, preset) {
-  const w = preset.width || 36;
-  const h = preset.height || 36;
-  const color = preset.color ?? 0xe63946;
+  const w = preset.width || 48;
+  const h = preset.height || 48;
+  const typeKey = preset.texture?.replace('enemy_', '') || 'basic';
 
   return ensureTexture(scene, key, w, h, (graphics, width, height) => {
-    graphics.fillStyle(color, 1);
-    graphics.fillTriangle(width / 2, height - 2, 3, 4, width - 3, 4);
-    graphics.fillStyle(0xffffff, 0.35);
-    graphics.fillRect(width * 0.3, 6, width * 0.4, Math.max(4, height * 0.2));
+    draw8BitEnemy(graphics, typeKey, width, height);
   });
 }
 
-/**
- * Representa un enemigo individual parametrizado por tipo.
- * Soporta reutilización mediante `Phaser.Physics.Arcade.Group` (`spawn` / `deactivate`).
- */
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
-  /**
-   * @param {Phaser.Scene} scene - Escena propietaria.
-   * @param {number} [x=0] - Posición X inicial.
-   * @param {number} [y=0] - Posición Y inicial.
-   * @param {string|object} [textureOrOptions='enemy_basic'] - Clave de textura o configuración inicial.
-   * @param {string|number} [frame] - Frame opcional.
-   */
   constructor(scene, x = 0, y = 0, textureOrOptions = 'enemy_basic', frame = undefined) {
     const isOptionsObj = typeof textureOrOptions === 'object' && textureOrOptions !== null;
     const options = isOptionsObj ? textureOrOptions : {};
@@ -147,27 +130,6 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     };
   }
 
-  /**
-   * Activa o reinicia el enemigo en `(x, y)` aplicando su tipo y modificadores.
-   *
-   * @param {number} x - Coordenada X de aparición.
-   * @param {number} y - Coordenada Y de aparición.
-   * @param {object} [options={}] - Parámetros de configuración.
-   * @param {'basic'|'fast'|'tank'} [options.type='basic'] - Tipo de enemigo.
-   * @param {number} [options.speed] - Velocidad vertical en px/s.
-   * @param {number} [options.health] - Puntos de salud iniciales.
-   * @param {number} [options.scoreValue] - Puntos otorgados al ser destruido.
-   * @param {number} [options.damage] - Daño por colisión con el jugador.
-   * @param {'straight'|'zigzag'} [options.pattern] - Patrón de movimiento.
-   * @param {number} [options.amplitude] - Amplitud horizontal para patrón `'zigzag'`.
-   * @param {number} [options.frequency] - Frecuencia angular para patrón `'zigzag'`.
-   * @param {boolean} [options.canShoot] - Si puede disparar hacia abajo.
-   * @param {Phaser.Physics.Arcade.Group} [options.bulletGroup] - Grupo de proyectiles enemigos.
-   * @param {{minX?: number, maxX?: number, minY?: number, maxY?: number}} [options.bounds] - Límites del área jugable.
-   * @param {Function} [options.onDefeated] - Callback `(enemy) => void` cuando muere por daño.
-   * @param {Function} [options.onEscape] - Callback `(enemy) => void` al cruzar el borde inferior.
-   * @returns {Enemy}
-   */
   spawn(x, y, options = {}) {
     const typeKey = options.type && ENEMY_TYPES[options.type] ? options.type : 'basic';
     const preset = ENEMY_TYPES[typeKey];
@@ -219,23 +181,27 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.enableBody(true, x, y, true, true);
     this.setDisplaySize(preset.width, preset.height);
     if (this.body) {
-      // Garantiza que la gravedad global de main.js no altere la velocidad controlada
       this.body.setAllowGravity(false);
-      const bodyW = Math.round(this.width * 1.25);
-      const bodyH = Math.round(this.height * 1.25);
+      const bodyW = Math.round(this.width * 0.95);
+      const bodyH = Math.round(this.height * 0.95);
       this.body.setSize(bodyW, bodyH, false);
-      this.body.setOffset(this.width * (1 - 1.25) / 2, this.height * (1 - 1.25) / 2);
+      this.body.setOffset(this.width * (1 - 0.95) / 2, this.height * (1 - 0.95) / 2);
+    }
+
+    if (this.scene?.tweens?.add) {
+      this.setAlpha(0.3);
+      this.scene.tweens.add({
+        targets: this,
+        alpha: 1,
+        duration: 120,
+        ease: 'Stepped'
+      });
     }
 
     this.move(0);
     return this;
   }
 
-  /**
-   * Ejecuta el patrón de movimiento del enemigo.
-   *
-   * @param {number} [elapsed=this._elapsedAlive] - Tiempo acumulado activo en ms.
-   */
   move(elapsed = this._elapsedAlive) {
     if (!this.alive || !this.active) {
       return;
@@ -341,12 +307,6 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  /**
-   * Aplica daño al enemigo. Si su salud llega a 0, lo marca como eliminado una sola vez.
-   *
-   * @param {number} [amount=1] - Cantidad de daño recibida.
-   * @returns {boolean} `true` si el daño fue aplicado.
-   */
   takeDamage(amount = 1) {
     if (!this.alive || !this.active || !Number.isFinite(amount) || amount <= 0) {
       return false;
@@ -371,9 +331,6 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     return true;
   }
 
-  /**
-   * Desactiva el enemigo y su cuerpo físico para devolverlo al pool del grupo.
-   */
   deactivate() {
     this.alive = false;
     if (this.body) {
